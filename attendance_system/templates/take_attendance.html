@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}Take Attendance - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Take/Edit Attendance</h2>
+
+    {# Part 1: Class and Date Selection Form #}
+    <form method="POST" action="{{ url_for('take_attendance') }}" class="mb-4">
+        {{ selection_form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend>Select Class and Date</legend>
+            <div class="form-group">
+                {{ selection_form.class_id.label(class="form-control-label") }}
+                {% if selection_form.class_id.errors %}
+                    {{ selection_form.class_id(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in selection_form.class_id.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% else %}
+                    {{ selection_form.class_id(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ selection_form.date.label(class="form-control-label") }}
+                {% if selection_form.date.errors %}
+                    {{ selection_form.date(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in selection_form.date.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% else %}
+                    {{ selection_form.date(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ selection_form.submit_select(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <hr>
+
+    {# Part 2: Student List for Attendance Marking #}
+    {% if class_selection_form_submitted and selected_class and selected_date %}
+        <h3>Attendance for {{ selected_class.name }} on {{ selected_date.strftime('%Y-%m-%d') }}</h3>
+        {% if students_with_attendance %}
+            <form method="POST" action="{{ url_for('take_attendance') }}">
+                {# Pass selected class and date back to the server #}
+                <input type="hidden" name="hidden_class_id" value="{{ selected_class.id }}">
+                <input type="hidden" name="hidden_date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
+
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Present</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student, attendance_data in students_with_attendance %}
+                        <tr>
+                            <td>
+                                {{ student.first_name }} {{ student.last_name }}
+                                <input type="hidden" name="student_ids" value="{{ student.id }}">
+                            </td>
+                            <td>
+                                <input type="checkbox" name="present_{{ student.id }}" value="true"
+                                       class="form-check-input"
+                                       {% if attendance_data.is_present %}checked{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="form-group">
+                    <input type="submit" name="submit_attendance" value="Submit Attendance" class="btn btn-success">
+                </div>
+            </form>
+        {% else %}
+            <p>No students found in the selected class: {{ selected_class.name }}. Please <a href="{{ url_for('add_student')}}">add students</a> or assign them to this class.</p>
+        {% endif %}
+    {% elif class_selection_form_submitted %}
+        <p>No students found for the selection. Please ensure the class has students.</p>
+    {% endif %}
+</div>
+{% endblock %}
