@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}View Attendance Records - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>View Attendance Records</h2>
+
+    <form method="POST" action="{{ url_for('view_attendance') }}" class="mb-4">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend>Filter Attendance Records</legend>
+            <div class="form-group">
+                {{ form.class_id.label(class="form-control-label") }}
+                {% if form.class_id.errors %}
+                    {{ form.class_id(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.class_id.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.class_id(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.date.label(class="form-control-label") }}
+                {% if form.date.errors %}
+                    {{ form.date(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.date.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.date(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit_view(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <hr>
+
+    {% if records_found is defined and not records_found and request.method == 'POST' %}
+        {# This check is a bit tricky; depends on how you signify form submission success AND no records #}
+        {# Better to rely on a specific flag or just check if attendance_records is empty after a POST #}
+         <p>No attendance records found for the selected criteria.</p>
+    {% endif %}
+
+    {% if attendance_records %}
+        <h3>
+            Attendance Records
+            {% if selected_class_name %}for {{ selected_class_name }}{% endif %}
+            {% if selected_date_str %}on {{ selected_date_str }}{% endif %}
+        </h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Class Name</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in attendance_records %}
+                <tr>
+                    <td>{{ record.student.first_name }} {{ record.student.last_name }}</td>
+                    <td>{{ record.class_attended.name }}</td>
+                    <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
+                    <td>{% if record.is_present %}Present{% else %}Absent{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elif request.method == 'POST' and records_found is not defined %}
+        {# This means form was submitted, but attendance_records is empty from the route #}
+        <p>No attendance records found for the selected criteria.</p>
+    {% endif %}
+
+</div>
+{% endblock %}
